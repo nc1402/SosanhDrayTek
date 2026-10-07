@@ -72,7 +72,7 @@ const num=s=>{const m=String(s||'').match(/[\d.]+/);return m?parseFloat(m[0]):nu
 const nat=i=>{const s=cell('NAT',i),n=num(s);return n===null?null:/k/i.test(s)?n*1000:n};
 const FEAT=[['WireGuard','WireGuard VPN'],['IPTV IGMP','IPTV FPT'],['Khả năng tải của Wi-Fi','Wi-Fi tích hợp'],['Số cổng USB','Cổng USB 3G/4G'],['SD-WAN','SD-WAN'],['High Availability','High Availability'],['Load-Balance (IP','Load-Balance nhiều WAN'],['Wi-Fi Marketing','Wi-Fi Marketing'],['Threat Protection','Threat Protection'],['IP Reputation','IP Reputation'],['EasyVPN','EasyVPN'],['DrayTek Cloud Free','DrayTek Cloud Free'],['Policy Route SLA','Policy Route SLA']];
 const sfp=i=>/SFP/i.test(cell('Số cổng WAN',i)+cell('Số cổng LAN',i));
-FEAT.push(['#sfp','Cổng quang SFP'],['#swap','Chuyển đổi WAN/LAN'],['#pon','GPON / XGSPON']);
+FEAT.push(['#sfp','Cổng quang SFP/SFP+'],['#swap','Chuyển đổi WAN/LAN'],['#pon','GPON / XGSPON']);
 const fHas=(k,i)=>k==='#sfp'?sfp(i):k==='#swap'?/chuyển đổi|WAN\/LAN|LAN\/WAN/i.test(cell('Số cổng WAN',i)+cell('Số cổng LAN',i)):k==='#pon'?/GPON|XGS/i.test(cell('Số cổng WAN',i)):has(cell(k,i));
 const sel=new Set(),on=new Set();
 $('#ver').textContent=D.ver;
