@@ -21,6 +21,8 @@ button{font:inherit;cursor:pointer}.link{background:none;border:0;color:var(--or
 .sb{flex:1;min-width:240px;display:flex;flex-direction:column;gap:6px}.dsc{display:flex;gap:6px;align-items:center;font-size:13px;color:#DCE4F2;cursor:pointer}
 .r2{display:flex;gap:8px;align-items:center;margin-bottom:6px}.r2 select{flex:1;margin:0;min-width:0}.tk{white-space:nowrap;font-size:13px;padding:0!important}
 .hint{font-size:12px;color:var(--mute);margin:2px 0 0}
+.nn{background:#fff;border-left:4px solid var(--org);padding:8px 12px;margin-bottom:12px;font-size:13px;border-radius:4px}.nn:empty{display:none}
+.hit{font-size:12px;background:#FFF6EE;border-radius:4px;padding:3px 8px}.empty button.link{font-size:inherit}
 .mn{background:none;border:0;padding:0;font:inherit;color:var(--navy);text-align:left;cursor:pointer}.mn:hover{color:var(--org);text-decoration:underline}
 .foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:4px}.foot .pick{margin:0;padding:0}
 .more{background:none;border:0;color:var(--org);font-weight:700;font-size:13px;padding:0}.more:hover{text-decoration:underline}
@@ -63,12 +65,12 @@ footer{max-width:1280px;margin:0 auto;padding:0 20px 90px;color:var(--mute);font
 @media(max-width:820px){main{grid-template-columns:1fr;padding:12px}aside{position:static;max-height:none}header{position:static}}
 </style></head><body>
 <header><div class="top"><div><h1>So sánh router DrayTek</h1><small id="ver"></small></div>
-<div class="sb"><input id="q" type="search" placeholder="Mô tả nhu cầu, ví dụ: 100 nhân viên, 2 wan, wireguard, quán cafe…" aria-label="Tìm kiếm"><label class="dsc"><input type="checkbox" id="disc"> Hiện model đã ngừng sản xuất</label><div id="sug"></div></div></div></header>
+<div class="sb"><input id="q" type="search" placeholder="Tìm trong toàn bộ bảng hoặc mô tả nhu cầu, ví dụ: dns, 100 nhân viên, 2 wan…" aria-label="Tìm kiếm"><label class="dsc"><input type="checkbox" id="disc"> Hiện model đã ngừng sản xuất</label><div id="sug"></div></div></div></header>
 <main>
 <aside id="f"><h2>Cấu hình tối thiểu</h2><div id="cfg"></div><p class="hint">Ô tick ở WAN/LAN: model có ít nhất 1 cổng từ tốc độ đó trở lên.</p>
 <h2>Cần tính năng nào?</h2><div id="feat"></div>
 <p><button class="link" id="reset">Xoá bộ lọc</button></p></aside>
-<section><div class="bar2"><p id="count"></p><label>Sắp xếp: <select id="sort"><option value="">Mặc định (theo bảng)</option><option value="users">Khả năng chịu tải (cao → thấp)</option><option value="nat">NAT sessions (cao → thấp)</option><option value="wan">Số cổng WAN (nhiều → ít)</option></select></label></div><div id="act"></div><div id="grid"></div></section></main>
+<section><div class="bar2"><p id="count"></p><label>Sắp xếp: <select id="sort"><option value="">Mặc định (theo bảng)</option><option value="users">Khả năng chịu tải (cao → thấp)</option><option value="nat">NAT sessions (cao → thấp)</option><option value="wan">Số cổng WAN (nhiều → ít)</option></select></label></div><div id="nn" class="nn"></div><div id="act"></div><div id="grid"></div></section></main>
 <footer id="notes"></footer>
 <div id="bar"><span id="bn"></span><button class="link" id="clr">Bỏ chọn</button><button class="go" id="go">So sánh</button></div>
 <dialog id="dlg"><div class="dh"><h2>So sánh chi tiết</h2><label><input type="checkbox" id="only"> Chỉ hiện điểm khác nhau</label><button class="x" id="cl">Đóng</button></div><div class="tw" id="tw"></div></dialog>
@@ -124,28 +126,27 @@ $('#cfg').innerHTML=FIL.map((f,j)=>`<label for="fl${j}" style="padding:0">${f[0]
 const mb=s=>/^\d+$/.test(s)?s+' Mbps':s;
 const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const fmtP=s=>esc(s).replace(/\s+(?=\*|-\s+P\d)/g,'<br>').replace(/([+-])\s+(P\d[\d,~]*)(?=\s|$)/g,'$1\u0001$2').replace(/\s+(?:\+\s+)?(?=P\d|WAN\d|Wan\d|\d+\s*x\s)/g,'<br>').replace(/\u0001/g,' ');
-function match(i,q){if(!q)return true;const m=M[i];if((m.name+' '+m.note).toLowerCase().includes(q))return true;
- return Object.values(R).some(r=>{const v=(r.vals[i]||'').toLowerCase();return v.includes(q)||(r.label.toLowerCase().includes(q)&&has(r.vals[i]))})}
 function render(){
- const iq=parseQ($('#q').value),q=iq.acts.length?'':$('#q').value.trim().toLowerCase(),fs=[...document.querySelectorAll('[data-f]:checked')].map(e=>e.dataset.f);
+ const iq=parseQ($('#q').value),q=iq.acts.length&&!RAW?'':$('#q').value.trim().toLowerCase(),fs=[...document.querySelectorAll('[data-f]:checked')].map(e=>e.dataset.f);
  const sd=$('#disc').checked,mins=FIL.map((f,j)=>+$('#fl'+j).value),sp=FIL.map((f,j)=>Math.max(0,...[...document.querySelectorAll(`[data-sp="${j}"]:checked`)].map(e=>+e.dataset.g)));
  const list=M.map((m,i)=>i).filter(i=>{if(!sd&&M[i].disc)return false;
   if(!FIL.every((f,j)=>(!mins[j]||(f[2](i)??0)>=mins[j])&&(!sp[j]||(f[3](i)??0)>=sp[j])))return false;
   return fs.every(k=>fHas(k,i))&&match(i,q)});
  const key={users:i=>M[i].users,nat:nat,wan:i=>M[i].wan}[$('#sort').value];
  if(key)list.sort((a,b)=>(key(b)??-1)-(key(a)??-1)||a-b);
- shown=list;
+ shown=list;const tk=toks(q);
+ const nt=tk.length?D.notes.filter(x=>tk.every(t=>new RegExp('(^|[^a-z0-9])'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test(nz(x)))):[];$('#nn').innerHTML=nt.length?'<b>Ghi chú liên quan:</b><br>'+nt.map(esc).join('<br>'):'';
  $('#count').textContent=`${list.length}/${N} model phù hợp`;
  const act=[];FEAT.forEach(f=>{if(fs.includes(f[0]))act.push([f[1],`data-ft="${f[0]}"`])});
  FIL.forEach((f,j)=>{const nm=f[0].replace(/ \(.*/,'');if(mins[j]){const o=f[1].find(o=>o[0]==mins[j]);act.push([nm+' '+(o?o[1]:''),`data-fl="${j}"`])}if(sp[j])act.push([nm.replace('Số cổng','Cổng')+' ≥ '+sp[j]+'GbE',`data-fs="${j}"`])});
  $('#act').innerHTML=act.map(a=>`<button class="ac" ${a[1]}>${esc(a[0])} ✕</button>`).join('');
  document.querySelectorAll('details.fg').forEach(d=>{const n=d.querySelectorAll('[data-f]:checked').length,b=d.querySelector('.n');b.hidden=!n;b.textContent=n});
- $('#grid').innerHTML=list.length?list.map(i=>{const m=M[i],c=p=>esc(cell(p,i)||'-');
+ $('#grid').innerHTML=list.length?list.map(i=>{const m=M[i],c=p=>esc(cell(p,i)||'-'),hh=tk.length?hits(i,tk):null,hl=hh?[...new Map(hh.filter(Boolean).map(e=>[e.l,e])).values()].slice(0,3).map(e=>`<div class="hit">Khớp: <b>${esc(e.l)}</b> — ${esc(e.v.length>70?e.v.slice(0,70)+'…':e.v)}</div>`).join(''):'';
   const ch=[...FEAT.filter(f=>fs.includes(f[0])&&fHas(f[0],i)).map(f=>`<span class="on">${f[1]}</span>`),...FEAT.filter(f=>!fs.includes(f[0])&&!UNI[f[0]]&&fHas(f[0],i)).map(f=>`<span>${f[1]}</span>`)].slice(0,8).join('');
   return `<article class="card${sel.has(i)?' sel':''}"><div><h3><button class="mn" data-d="${i}" title="Xem chi tiết">${esc(m.name)}</button>${m.disc?'<span class="badge">Ngừng sx</span>':''}</h3><div class="note">${esc(m.note)||'&nbsp;'}</div></div>
   <dl><dt>DrayOS</dt><dd>${c('DrayOS')}</dd><dt>NAT sessions</dt><dd>${c('NAT')}</dd><dt>NAT throughput</dt><dd>${esc(mb(cell('PPPoE',i))||'-')}</dd><dt>Chịu tải thực tế</dt><dd>${has(cell('Khả năng chịu tải',i))?c('Khả năng chịu tải')+' user':'-'}</dd><dt>Kênh VPN</dt><dd>${c('Tổng số kênh VPN')}</dd></dl>
-  <div class="ports"><div><b>WAN:</b><br>${fmtP(cell('Số cổng WAN',i)||'-')}</div><div><b>LAN:</b><br>${fmtP(cell('Số cổng LAN',i)||'-')}</div></div><div class="chips">${ch}</div>
-  <div class="foot"><label class="pick"><input type="checkbox" data-s="${i}"${sel.has(i)?' checked':''}> Chọn để so sánh</label><button class="more" data-d="${i}">Xem chi tiết ›</button></div></article>`}).join(''):'<div class="empty">Không có model nào đáp ứng đủ điều kiện. Hãy bỏ bớt một bộ lọc.</div>';
+  <div class="ports"><div><b>WAN:</b><br>${fmtP(cell('Số cổng WAN',i)||'-')}</div><div><b>LAN:</b><br>${fmtP(cell('Số cổng LAN',i)||'-')}</div></div>${hl}<div class="chips">${ch}</div>
+  <div class="foot"><label class="pick"><input type="checkbox" data-s="${i}"${sel.has(i)?' checked':''}> Chọn để so sánh</label><button class="more" data-d="${i}">Xem chi tiết ›</button></div></article>`}).join(''):emptyMsg(tk);
  $('#bar').classList.toggle('on',sel.size>0);$('#bn').textContent=`Đã chọn ${sel.size}/4 model`;$('#go').disabled=sel.size<2;
 }
 function compare(){const ix=[...sel].sort((a,b)=>a-b),only=$('#only').checked;
@@ -191,16 +192,32 @@ function suggest(){const raw=$('#q').value,{acts,t}=parseQ(raw);cur=[];hl=0;
  acts.forEach(a=>cur.push({label:a.label,sub:'áp dụng bộ lọc',run:a.run}));
  if(t){const last=t.split(/\s+/).pop();
   if(last.length>1)FEAT.filter(f=>!acts.some(a=>a.id===f[0])&&(nz(f[1]).includes(last)||(ALIAS[f[0]]||[]).some(w=>w.startsWith(last)))).slice(0,3).forEach(f=>cur.push({label:f[1],sub:'tính năng',run:A.feat(f).run}));
-  M.forEach(m=>{if(nz(m.name).includes(t))cur.push({label:m.name,sub:'model',keep:1,run:()=>{$('#q').value=m.name}})})}
- cur=cur.slice(0,8);if(!cur.length&&raw.trim().length>1)cur.push({label:`Tìm theo từ khoá "${raw.trim()}"`,sub:'đang lọc theo chữ',keep:1,run:()=>{}});paint()}
+  M.forEach(m=>{if(nz(m.name).includes(t))cur.push({label:m.name,sub:'model',keep:1,run:()=>{$('#q').value=m.name;RAW=true}})})}
+ if(t){const lw=t.split(/\s+/).pop();if(lw.length>1)D.groups.flatMap(g=>g.rows).filter(r=>nz(r.label).includes(lw)&&!cur.some(c=>c.label===r.label)).slice(0,3).forEach(r=>cur.push({label:r.label,sub:'tiêu chí',keep:1,run:()=>{$('#q').value=r.label;RAW=true}}))}
+ if(!acts.length&&raw.trim().length>1){const sd=$('#disc').checked,n=M.filter((m,i)=>(sd||!m.disc)&&match(i,raw)).length;cur.unshift({label:`Tìm "${raw.trim()}" trong toàn bộ bảng`,sub:n?n+' model':'không có kết quả',keep:1,run:()=>{RAW=true}})}
+ cur=cur.slice(0,8);paint()}
 function pick(k){const c=cur[k];if(!c)return;c.run();if(!c.keep)$('#q').value='';cur=[];paint();render()}
-$('#q').addEventListener('input',suggest);$('#q').addEventListener('focus',suggest);$('#q').addEventListener('blur',()=>$('#sug').classList.remove('on'));
+$('#q').addEventListener('input',()=>{RAW=false;suggest()});$('#q').addEventListener('focus',suggest);$('#q').addEventListener('blur',()=>$('#sug').classList.remove('on'));
 $('#q').addEventListener('keydown',e=>{if(e.key==='ArrowDown'||e.key==='ArrowUp'){if(cur.length){hl=(hl+(e.key==='ArrowDown'?1:cur.length-1))%cur.length;paint();e.preventDefault()}}
  else if(e.key==='Enter'&&cur.length){pick(hl);e.preventDefault()}else if(e.key==='Escape'){cur=[];paint()}});
 $('#sug').addEventListener('mousedown',e=>{e.preventDefault();const b=e.target.closest('.si');if(b)pick(+b.dataset.k)});
 $('#act').addEventListener('click',e=>{const b=e.target.closest('.ac');if(!b)return;const d=b.dataset;
  if(d.ft!==undefined)document.querySelector(`[data-f="${d.ft}"]`).checked=false;if(d.fl!==undefined)$('#fl'+d.fl).value=0;
  if(d.fs!==undefined)document.querySelectorAll(`[data-sp="${d.fs}"]`).forEach(c=>c.checked=false);render()});
+let RAW=false;
+const STOP=new Set(['router','tim','kiem','co','cho','can','va','la','cua','voi','muon','thiet','bi','nhung']);
+function toks(q){return nz(q).split(/[\s;]+/).map(t=>t.replace(/^\.+|\.+$/g,'')).filter(t=>t&&!STOP.has(t))}
+const IDX=M.map((m,i)=>({head:nz(m.name+' '+m.note),ent:D.groups.flatMap(g=>g.rows.map(r=>({l:r.label,v:r.vals[i]||'',n:nz(g.title+' '+r.label+' '+(r.vals[i]||''))}))).filter(e=>has(e.v))}));
+function hits(i,tk){const x=IDX[i],out=[];for(const t of tk){if(x.head.includes(t)){out.push(null);continue}const e=x.ent.find(e=>e.n.includes(t));if(!e)return null;out.push(e)}return out}
+function match(i,q){const tk=toks(q);return !tk.length||hits(i,tk)!==null}
+const ORIG=[...M.map(m=>m.name+' '+m.note),...D.notes,...D.groups.flatMap(g=>[g.title,...g.rows.flatMap(r=>[r.label,...r.vals])])].join(' ');
+const ALLTXT=nz(ORIG),VOC=new Map();
+ORIG.split(/[\s,;:()\[\]|]+/).forEach(w=>{w=w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,'');if(w.length>2){const k=nz(w);if(!VOC.has(k))VOC.set(k,w)}});
+const lev=(a,b)=>{const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length]};
+const near=t=>[...VOC].map(([k,w])=>[(k.startsWith(t)||(k.length>=4&&t.startsWith(k)))?0.5:lev(k,t),w]).filter(x=>x[0]<=Math.max(1,Math.floor(t.length/4))).sort((a,b)=>a[0]-b[0]).slice(0,3).map(x=>x[1]);
+function emptyMsg(tk){let h='<div class="empty">Không có model nào đáp ứng đủ điều kiện.';const miss=tk.filter(t=>!ALLTXT.includes(t));
+ if(miss.length){const rw=$('#q').value.split(/[\s;,]+/),lb=t=>rw.find(w=>nz(w).replace(/^\.+|\.+$/g,'')===t)||t;h+=`<br>Bảng so sánh không có từ <b>${esc(miss.map(lb).join(', '))}</b>.`;const sg=[...new Set(miss.flatMap(near))].slice(0,4);if(sg.length)h+='<br>Có phải bạn muốn tìm: '+sg.map(w=>`<button class="link" data-qs="${esc(w)}">${esc(w)}</button>`).join(' · ')}
+ else h+='<br>Hãy bỏ bớt một bộ lọc hoặc bớt từ khoá.';return h+'</div>'}
 let shown=[],cd=-1;
 function detail(i){cd=i;const m=M[i],h=$('#dhide').checked,na=v=>v===''||v==='-'||v==='–';
  $('#dt').innerHTML=esc(m.name)+(m.disc?'<span class="badge">Ngừng sx</span>':'')+(m.note?`<small>${esc(m.note)}</small>`:'');
@@ -213,7 +230,7 @@ function detail(i){cd=i;const m=M[i],h=$('#dhide').checked,na=v=>v===''||v==='-'
  $('#dcmp').textContent=sel.has(i)?'✓ Đã chọn so sánh':'+ Thêm vào so sánh';
  const k=shown.indexOf(i);$('#dp').disabled=k<1;$('#dn').disabled=k<0||k>=shown.length-1;
  if(!$('#dd').open)$('#dd').showModal()}
-$('#grid').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(b)detail(+b.dataset.d)});
+$('#grid').addEventListener('click',e=>{const s=e.target.closest('[data-qs]');if(s){$('#q').value=s.dataset.qs;RAW=false;render();return}const b=e.target.closest('[data-d]');if(b)detail(+b.dataset.d)});
 $('#dp').onclick=()=>{const k=shown.indexOf(cd);if(k>0)detail(shown[k-1])};
 $('#dn').onclick=()=>{const k=shown.indexOf(cd);if(k>=0&&k<shown.length-1)detail(shown[k+1])};
 $('#dcmp').onclick=()=>{if(sel.has(cd))sel.delete(cd);else if(sel.size>=4){alert('Chọn tối đa 4 model để so sánh.');return}else sel.add(cd);render();detail(cd)};
